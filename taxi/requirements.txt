@@ -1,0 +1,15 @@
+asyncio
+aiohttp
+confluent-kafka
+requests
+avro
+pydantic
+fastavro
+backoff
+dbt-postgres
+polars
+connectorx
+pyarrow
+fastapi
+uvicorn
+pretty_html_table
