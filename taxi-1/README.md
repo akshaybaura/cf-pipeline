@@ -7,7 +7,7 @@
 
 ## TL;DR version
 
-![High Level architecture](/taxi/images/architecture.jpeg)
+![High Level architecture](/taxi-1/images/architecture.jpeg)
 
 This project involves building a data engineering pipeline to extract, validate, and transform data from the Chicago Taxi Trips dataset available on the City of Chicago's open data portal. The pipeline is built using asyncio and pydantic to efficiently process and validate the data, followed by streaming the data to a Kafka topic and ultimately dumping it into a PostgreSQL database using a JDBC sink.
 
@@ -43,7 +43,7 @@ I also put in unit tests for different models and source transaction table, and 
 1. Run `docker-compose up -d`.
 This step might take a few minutes based on the network speed since the confluent images are bulky.  
 2. When done, run: `docker-compose ps` to check the state of the containers. Ideally it should look like this:  
-![docker-compose-ps](/taxi/images/docker-compose-ps-op.png)  
+![docker-compose-ps](/taxi-1/images/docker-compose-ps-op.png)  
 If any containers exit, feel free to fire `docker-compose up -d` again.  
 
 -------------------**Requisites**--------------------------------------  
@@ -56,53 +56,53 @@ Execute: cd ~ && vi .dbt/profiles.yml => change the value of host there as well.
 
 3. On a browser, enter: `http://localhost:9021`. Since, it could take a few seconds for the broker to be registered completely, you might see something like this:  
 
-![9021-unhealthy](/taxi/images/9021-unhealthy.png)  
+![9021-unhealthy](/taxi-1/images/9021-unhealthy.png)  
 
 Wait for a few seconds, it will turn to something like this:  
 
-![9021-healthy](/taxi/images/9021-healthy.png)  
+![9021-healthy](/taxi-1/images/9021-healthy.png)  
 
 4. Now that the cluster is stable, we will create a connector. Change directory to `extract_stream_load` and execute `./pg_sink_connector_create.sh`. It would ask you the topic to land the data in kafka the table name to land the data in postgres. As you press enter, it will give you the connector details.  
 
 5. Return to the browser to the control-center console. To verify that the connector is successfully created and running, select the cluster => select Connect on left panel => select connect-default, you should see the connector created in last step in running state, e.g.  
 
-![connector-state](/taxi/images/connector-state.png)  
+![connector-state](/taxi-1/images/connector-state.png)  
 
 6. Now, the pipeline is up. We just need to execute our script to flow the data through it.  
 But first, on your bash terminal, run: `docker exec -it postgresql /bin/bash` and then `psql -h localhost -U postgres`, this will get you to the psql terminal. Run `\dt` to verify if any tables exist already. Since, its a fresh instance, you won't see any tables.  
 
 On another bash terminal, run: `docker exec -it etl_container python /home/app/extract_stream_load/async_pull.py`. Do not close the terminal. You would see logs from the execution like below:  
 
-![script-logs](/taxi/images/script-run-op.png)  
+![script-logs](/taxi-1/images/script-run-op.png)  
 
 > Note: I have inserted an app token in async_pull.py on line#24 since the website claimed it makes the calls faster. I have seen the api calls sometimes fail to start, you might want to retry by commenting out the token block in such cases.  
 
 Now, verify the table in postgres.  
 
-![table-created](/taxi/images/table-created.png)  
+![table-created](/taxi-1/images/table-created.png)  
 
-![table-count](/taxi/images/table-count.png) 
+![table-count](/taxi-1/images/table-count.png) 
 
 7. Now that the transactional table is populated, we can view the data using the api. On your local, execute: `docker exec -it etl_container uvicorn home.app.taxi.expose.expose_apis:app --reload --host 0.0.0.0`. On your web browser, type `localhost:8000`, you'll see a tab as below:  
 
-![api-home](/taxi/images/api_home.png)  
+![api-home](/taxi-1/images/api_home.png)  
 
 and you could download the dataset as: `localhost:8000/data/csv` or `localhost:8000/data/json`.  
 
 Also, if you want to display sample data on the page itself: `localhost:8000/custom_query/display/select tip_id, trip_Seconds,trip_miles from trips` would return something like this:  
 
-![api-data-display](/taxi/images/api-display-data.png)   
+![api-data-display](/taxi-1/images/api-display-data.png)   
 
 8. The only thing now remains is dbt transformation and testing. Run the following command on your local: `docker exec -it etl_container bash -c "cd /home/app/transform/taxi_tf; dbt run; dbt test `. You would see dbt running the models  
-![dbt-run](/taxi/images/dbt-run-op.png)  
+![dbt-run](/taxi-1/images/dbt-run-op.png)  
 and tests.   
-![dbt-test](/taxi/images/dbt-tests.png)  
+![dbt-test](/taxi-1/images/dbt-tests.png)  
 
 You can query the tables in postgres created post dbt transformations like this:  
 
-![postges-tables](/taxi/images/dbt-models.png)  
+![postges-tables](/taxi-1/images/dbt-models.png)  
 
 
 9. You could also see the graph view of model: `docker exec -it etl_container bash -c "cd /home/app/transform/taxi_tf; dbt docs generate; dbt docs serve --port 8001" `
 
-![dbt-display](/taxi/images/dim_model_dbt.png)  
+![dbt-display](/taxi-1/images/dim_model_dbt.png)  
